@@ -1,6 +1,7 @@
 ﻿
 using System.CodeDom;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 namespace ConsoleApplication7
@@ -9,12 +10,10 @@ namespace ConsoleApplication7
     {
         static void Main(string[] args)
         {
-            var code = new DynamicCode();
-            code.GenerateCode();
            
         }
     }
-
+   
     public class DynamicCode
     {
         public void GenerateCode()
@@ -67,6 +66,45 @@ namespace ConsoleApplication7
             compilerParameters.GenerateExecutable = false;
             compilerParameters.GenerateInMemory = false;
             compilerParameters.OutputAssembly = "customer.dll";
+            var result = provider.CompileAssemblyFromDom(compilerParameters, unit);
+        }
+
+        public void GenerateCSCode(IList<PropertyMemberSource> properties)
+        {
+            var unit = new CodeCompileUnit();
+
+            var samplenamespace = new CodeNamespace("Com");
+
+            var customerclass = new CodeTypeDeclaration("XX");
+            customerclass.IsClass = true;
+            customerclass.TypeAttributes = TypeAttributes.Public;
+
+            samplenamespace.Types.Add(customerclass);
+            unit.Namespaces.Add(samplenamespace);
+
+            var outputFile = "XX.cs";
+            foreach(var item in properties)
+            {
+                var snippet = new CodeSnippetTypeMember();
+                snippet.Text = $"public {item.TypeName} {item.PropertyName} {{get;set;}}";
+                customerclass.Members.Add(snippet);
+            }
+
+            var provider = CodeDomProvider.CreateProvider("CSharp");
+
+            var options = new CodeGeneratorOptions();
+            options.BracingStyle = "C";
+            options.BlankLinesBetweenMembers = true;
+            using (var w = new StreamWriter(outputFile))
+            {
+                provider.GenerateCodeFromCompileUnit(unit, w, options);
+            }
+
+            //create dll
+            var compilerParameters = new CompilerParameters();
+            compilerParameters.GenerateExecutable = false;
+            compilerParameters.GenerateInMemory = false;
+            compilerParameters.OutputAssembly = "XXX.dll";
             var result = provider.CompileAssemblyFromDom(compilerParameters, unit);
         }
     }
